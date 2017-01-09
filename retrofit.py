@@ -98,13 +98,13 @@ def fuzzy_retrofit(wordVecs, lexicon, numIters):
         continue
       totalDegree = 0
       for ppword in wordNeighbours:
-          totalDegree += lexicon[word][ppword]
+          totalDegree += float(lexicon[word][ppword])
       # the weight of the data estimate if the number of neighbours
       newVec = totalDegree * numNeighbours * wordVecs[word]
       # loop over neighbours and add to new vector (currently with weight 1)
       # with membership as the weight
       for ppWord in wordNeighbours:
-        newVec += lexicon[word][ppword] * newWordVecs[ppWord]
+        newVec += float(lexicon[word][ppword]) * newWordVecs[ppWord]
       newWordVecs[word] = newVec/(2*totalDegree*numNeighbours)
   return newWordVecs
   
