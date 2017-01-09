@@ -5,23 +5,28 @@ import sys
 
 
 class PPDB_2(object):
-    def __init__(self, ppdb="ppdb-2.0-tldr"):
+    def __init__(self, vocab="../SNetSG_ts/vocab_text9.txt", ppdb="../SNetSG_ts/ppdb-2.0-tldr"):
         self.ppdb_paraphrases = ppdb_paraphrases = {}
+        with open(vocab, "r") as f_vocab:
+            words = f_vocab.readlines()
+            words = [x.split()[0] for x in words]
+            self.words = words
         with open(ppdb, "r") as ppdb_f:
             lines = ppdb_f.readlines()
             print "Total lines: " + str(len(lines))
             n = 0
             for line in lines:
-                baseword = line.split("|||")[1].strip()
-                ppword = line.split("|||")[2].strip()
-                score = line.split("|||")[3].split(" ")[1].split("=")[1]
-                if (line.split("|||")[-1].strip() == "Equivalence"):
-                    self.add_paraphrases(baseword, ppword, score)
-                    self.add_paraphrases(ppword, baseword, score)
-                elif (line.split("|||")[-1].strip() == "ForwardEntailment"):
-                    self.add_paraphrases(baseword, ppword, score)
-                elif (line.split("|||")[-1].strip() == "ReverseEntailment"):
-                    self.add_paraphrases(ppword, baseword, score)
+                if (line.split("|||")[1].strip() in words) and (line.split("|||")[2].strip() in words):
+                    baseword = line.split("|||")[1].strip()
+                    ppword = line.split("|||")[2].strip()
+                    score = line.split("|||")[3].split(" ")[1].split("=")[1]
+                    if (line.split("|||")[-1].strip() == "Equivalence"):
+                        self.add_paraphrases(baseword, ppword, score)
+                        self.add_paraphrases(ppword, baseword, score)
+                    elif (line.split("|||")[-1].strip() == "ForwardEntailment"):
+                        self.add_paraphrases(baseword, ppword, score)
+                    elif (line.split("|||")[-1].strip() == "ReverseEntailment"):
+                        self.add_paraphrases(ppword, baseword, score)
                 n += 1
                 if n%10000 == 0:
                     print str(n) + " lines processed."
@@ -49,7 +54,7 @@ class PPDB_2(object):
 if __name__ == "__main__":
     if len(sys.argv)>1:
         #python PPDB.py ppdb
-        ppdb_s_corpus = PPDB_2(sys.argv[1])
+        ppdb_s_corpus = PPDB_2(ppdb=sys.argv[1])
     else:
         ppdb_s_corpus = PPDB_2()
     ppdb_s_corpus.save_ppdb()

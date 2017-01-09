@@ -53,6 +53,10 @@ def read_lexicon(filename, wordVecs):
     lexicon[norm_word(words[0])] = [norm_word(word) for word in words[1:]]
   return lexicon
 
+''' Read the PPDB2 word relations as a dictionary '''
+def read_ppdb2(filename, wordVecs):
+  pass
+
 ''' Retrofit word vectors to a lexicon '''
 def retrofit(wordVecs, lexicon, numIters):
   newWordVecs = deepcopy(wordVecs)
@@ -84,7 +88,10 @@ if __name__=='__main__':
   args = parser.parse_args()
 
   wordVecs = read_word_vecs(args.input)
-  lexicon = read_lexicon(args.lexicon, wordVecs)
+  if args.lexicon[-4:]=".pkl":
+    lexicon = read_ppdb2(args.lexicon, wordVecs)
+  else:
+    lexicon = read_lexicon(args.lexicon, wordVecs)
   numIter = int(args.numiter)
   outFileName = args.output
   
