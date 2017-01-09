@@ -121,7 +121,7 @@ if __name__=='__main__':
   outFileName = args.output
 
   wordVecs = read_word_vecs(args.input)
-  if args.lexicon[-4:]=".pkl":
+  if args.lexicon[-4:] == ".pkl":
     lexicon = read_ppdb2(args.lexicon, wordVecs)
     ''' Enrich the word vectors using ppdb and print the enriched vectors '''
     print_word_vecs(fuzzy_retrofit(wordVecs, lexicon, numIter), outFileName) 
