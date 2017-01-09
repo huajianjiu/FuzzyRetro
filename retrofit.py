@@ -4,6 +4,7 @@ import math
 import numpy
 import re
 import sys
+import cPickle as pickle
 
 from copy import deepcopy
 
@@ -53,10 +54,6 @@ def read_lexicon(filename, wordVecs):
     lexicon[norm_word(words[0])] = [norm_word(word) for word in words[1:]]
   return lexicon
 
-''' Read the PPDB2 word relations as a dictionary '''
-def read_ppdb2(filename, wordVecs):
-  pass
-
 ''' Retrofit word vectors to a lexicon '''
 def retrofit(wordVecs, lexicon, numIters):
   newWordVecs = deepcopy(wordVecs)
@@ -73,9 +70,42 @@ def retrofit(wordVecs, lexicon, numIters):
       # the weight of the data estimate if the number of neighbours
       newVec = numNeighbours * wordVecs[word]
       # loop over neighbours and add to new vector (currently with weight 1)
+      # with membership as the weight
       for ppWord in wordNeighbours:
         newVec += newWordVecs[ppWord]
       newWordVecs[word] = newVec/(2*numNeighbours)
+  return newWordVecs
+
+''' Read the PPDB2 word relations as a dictionary '''
+def read_ppdb2(filename, wordVecs):
+  lexicon = {}
+  with open(filename, 'rb') as f_load:
+    lexicon = pickle.load(f_load)
+  return lexicon
+
+''' Retrofit word vectors to a lexicon '''
+def fuzzy_retrofit(wordVecs, lexicon, numIters):
+  newWordVecs = deepcopy(wordVecs)
+  wvVocab = set(newWordVecs.keys())
+  loopVocab = wvVocab.intersection(set(lexicon.keys()))
+  for it in range(numIters):
+    # loop through every node also in ontology (else just use data estimate)
+    for word in loopVocab:
+      wordNeighbours = set(lexicon[word].keys()).intersection(wvVocab)
+      numNeighbours = len(wordNeighbours)
+      #no neighbours, pass - use data estimate
+      if numNeighbours == 0:
+        continue
+      totalDegree = 0
+      for ppword in wordNeighbours:
+          totalDegree += lexicon[word][ppword]
+      # the weight of the data estimate if the number of neighbours
+      newVec = totalDegree * numNeighbours * wordVecs[word]
+      # loop over neighbours and add to new vector (currently with weight 1)
+      # with membership as the weight
+      for ppWord in wordNeighbours:
+        newVec += lexicon[word][ppword] * newWordVecs[ppWord]
+      newWordVecs[word] = newVec/(2*totalDegree*numNeighbours)
   return newWordVecs
   
 if __name__=='__main__':
@@ -87,13 +117,15 @@ if __name__=='__main__':
   parser.add_argument("-n", "--numiter", type=int, default=10, help="Num iterations")
   args = parser.parse_args()
 
+  numIter = int(args.numiter)
+  outFileName = args.output
+
   wordVecs = read_word_vecs(args.input)
   if args.lexicon[-4:]=".pkl":
     lexicon = read_ppdb2(args.lexicon, wordVecs)
+    ''' Enrich the word vectors using ppdb and print the enriched vectors '''
+    print_word_vecs(fuzzy_retrofit(wordVecs, lexicon, numIter), outFileName) 
   else:
     lexicon = read_lexicon(args.lexicon, wordVecs)
-  numIter = int(args.numiter)
-  outFileName = args.output
-  
-  ''' Enrich the word vectors using ppdb and print the enriched vectors '''
-  print_word_vecs(retrofit(wordVecs, lexicon, numIter), outFileName) 
+    ''' Enrich the word vectors using ppdb and print the enriched vectors '''
+    print_word_vecs(retrofit(wordVecs, lexicon, numIter), outFileName) 
